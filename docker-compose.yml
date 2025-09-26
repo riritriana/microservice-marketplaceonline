@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # --- DATABASE SERVICES ---
+  db-user:
+    image: mariadb:10.6
+    container_name: db-user
+    restart: unless-stopped # Akan otomatis restart jika gagal
+    environment:
+      MARIADB_DATABASE: userdb
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_ROOT_PASSWORD: root_password
+    volumes:
+      - user-data:/var/lib/mysql
+    networks:
+      - marketplace-net
+
+  db-product:
+    image: mariadb:10.6
+    container_name: db-product
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: productdb
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_ROOT_PASSWORD: root_password
+    volumes:
+      - product-data:/var/lib/mysql
+    networks:
+      - marketplace-net
+      
+  db-cart:
+    image: mariadb:10.6
+    container_name: db-cart
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: cartdb
+      MARIADB_USER: user
+      MARIADB_PASSWORD: password
+      MARIADB_ROOT_PASSWORD: root_password
+    volumes:
+      - cart-data:/var/lib/mysql
+    networks:
+      - marketplace-net
+
+  # --- APPLICATION SERVICES ---
+  user-service:
+    build: ./user-management-service
+    container_name: user-service-app
+    restart: on-failure # Akan restart jika crash saat startup
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db-user # Kembali ke depends_on sederhana
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://db-user:3306/userdb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    networks:
+      - marketplace-net
+
+  product-service:
+    build: ./product-management-service
+    container_name: product-service-app
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db-product
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://db-product:3306/productdb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+    networks:
+      - marketplace-net
+      
+  cart-service:
+    build: ./cart-service
+    container_name: cart-service-app
+    restart: on-failure
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db-cart
+      - product-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://db-cart:3306/cartdb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - PRODUCT_SERVICE_URL=http://product-service:8081
+    networks:
+      - marketplace-net
+
+volumes:
+  user-data:
+  product-data:
+  cart-data:
+
+networks:
+  marketplace-net:

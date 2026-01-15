@@ -1,6 +1,6 @@
 # Proyek Microservice Online Marketplace
 
-Proyek ini adalah implementasi arsitektur microservice untuk sebuah marketplace online sederhana, sesuai dengan tantangan dari Simple Journey Indonesia.
+Proyek ini adalah implementasi arsitektur microservice untuk sebuah marketplace online .
 
 ## Arsitektur & Teknologi
 Proyek ini terdiri dari 3 service utama yang saling berinteraksi:
